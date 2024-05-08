@@ -129,7 +129,6 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
 resource "aws_launch_configuration" "as_conf" {
   image_id      = var.ami_id
   instance_type = var.instance_type
-  spot_price    = "0.001"
 
   lifecycle {
     create_before_destroy = true
@@ -148,23 +147,9 @@ resource "aws_autoscaling_group" "public_ASG" {
   health_check_type         = "ELB"
   desired_capacity          = 4
   force_delete              = true
-  placement_group           = aws_placement_group.test.id
+  #placement_group           = aws_placement_group.test.id
   launch_configuration      = aws_launch_configuration.as_conf.name
   vpc_zone_identifier       = [aws_subnet.frank_public_SN_1.id, aws_subnet.frank_public_SN_2.id]
-
-  initial_lifecycle_hook {
-    name                 = "foobar"
-    default_result       = "CONTINUE"
-    heartbeat_timeout    = 2000
-    lifecycle_transition = "autoscaling:EC2_INSTANCE_LAUNCHING"
-
-    notification_metadata = jsonencode({
-      foo = "bar"
-    })
-
-    notification_target_arn = "arn:aws:sqs:us-east-2:444455556666:queue1*"
-    role_arn                = "arn:aws:iam::123456789012:role/S3Access"
-  }
 
   tag {
     key                 = "foo"
@@ -251,7 +236,7 @@ resource "aws_iam_role_policy" "s3_policy" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = "s3:Describe*"
+        Action   = "s3:*"
         Resource = "*"
       }
     ]
